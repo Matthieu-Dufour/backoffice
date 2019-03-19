@@ -1,3 +1,37 @@
+<!-- 
+    cloud name : atelier2
+    API key : 813832212365175
+    API secret : U8YsgvTYK77hjZHKYip91XxWnDk
+    environment variable : CLOUDINARY_URL=cloudinary://813832212365175:U8YsgvTYK77hjZHKYip91XxWnDk@atelier2
+
+    var CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/atelier2"
+    var CLOUDINARY_UPLOAD_PRESET = "minkrehu"
+
+    var file = event.target.files[0]
+    var formData = new FormData();
+    formData.append('file', file)
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
+
+    axios.post(CLOUDINARY_URL,{
+        proxy: {
+            host: 'http://www-cache.iutnc.univ-lorraine.fr/',
+            port: 3128
+        },
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        data: formData
+    }).then(response => {
+       console.log(res)
+    })
+    .catch(error => {
+        console.error(error)
+     })
+     .finally(() => {
+     })
+ -->
+
+
 <!DOCTYPE html>
 <html>
 
@@ -37,7 +71,9 @@
         <!-- ONGLET CREATION DE SERIE -->
         <div v-if="affichage === 'serie'">
             <div class="container">
-                <div class="row">
+                <div class="row alert"
+                    v-bind:class="{ 'messageSuccess': messageSerieSuccess, 'messageEchec': !messageSerieSuccess }"
+                    v-if="messageSerie != null">
                     {{ messageSerie }}
                 </div>
                 <div class="row">
@@ -69,13 +105,36 @@
                         <div id="mapSerie"></div>
                     </div>
                 </div>
+                <div class="row">
+                    <h2>Liste des séries</h2>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Nom</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for='serie in series'>
+                                <td>{{serie.id}}</td>
+                                <td>{{serie.ville}}</td>
+                                <td><button type="button" class="btn btn-danger"
+                                        v-on:click="deleteSerie(serie.id)">Supprimer</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- ONGLET AJOUT DE PHOTO -->
         <div v-if="affichage === 'photo'">
             <div class="container">
-                <div class="row">
+
+                <div class="row alert"
+                    v-bind:class="{ 'messageSuccess': messagePhotoSuccess, 'messageEchec': !messagePhotoSuccess }"
+                    v-if="messagePhoto != null">
                     {{ messagePhoto }}
                 </div>
                 <div class="row">
@@ -135,6 +194,9 @@
                 mapPhotoMarker: null,
                 file: null,
                 messagePhoto: null,
+                messagePhotoSuccess: false,
+                selectedFile: null,
+                idImageSend: null,
 
                 /* --------- AFFICHAGE SERIE --------- */
                 nomSerie: '',
@@ -143,10 +205,12 @@
                 tailleCarte: null,
                 echelleCarte: null,
                 messageSerie: null,
+                messageSerieSuccess: false,
 
 
                 /* --------- Emuler les APIs --------- */
 
+                series: null,
                 photos: [
                     { id: "1", desc: "Cathédrale", position: "", url: "" },
                     { id: "2", desc: "Tour", position: "", url: "" },
@@ -183,10 +247,11 @@
                             this.ajoutPhotoLatitude = null
                             this.ajoutPhotoLongitude = null
                             this.affichage = page
-                            setTimeout(() => this.initMapPhoto([[parseFloat(new Array(new Array(this.series[0].lat1, this.series[0].lon1), new Array(this.series[0].lat2, this.series[0].lon2))),
-                            parseFloat(this.series[0].lon1)],
-                            [parseFloat(this.series[0].lat2),
-                            parseFloat(this.series[0].lon2)]]), 1);
+                            setTimeout(() => this.initMapPhoto(
+                                [
+                                    [parseFloat(new Array(new Array(this.series[0].lat1, this.series[0].lon1), new Array(this.series[0].lat2, this.series[0].lon2))),
+                                    parseFloat(this.series[0].lon1)], [parseFloat(this.series[0].lat2),
+                                    parseFloat(this.series[0].lon2)]]), 1);
                             this.messageSerie = null;
                         }
                     }
@@ -196,6 +261,7 @@
                 ajouterSerie(nomSerie) {
                     /* Méthode qui permet d'ajouter la série dans la BDD (via POST)*/
                     if (this.nomSerie.trim() == '' || this.tailleCarte == null) {
+                        this.messageSerieSuccess = false
                         this.messageSerie = "Tous les champs doivent être complétés pour créer une nouvelle série"
                     } else {
                         axios.post('http://192.168.99.100:8081/series', {
@@ -217,14 +283,16 @@
 
                             })
                             .then(response => {
-                                console.log(response.data)
-
+                                this.messageSerie = "Série Ajoutée"
+                                this.messageSerieSuccess = true
+                                this.getAllSeries();
                             })
                             .catch(error => {
+                                console.log(error)
                             })
                             .finally(() => {
-                                this.messageSerie = "Série Ajoutée"
-                                this.getAllSeries();
+
+
                             })
                     }
                 },
@@ -234,33 +302,82 @@
                 onUpload() {
                     /* Méthode qui upload la photo avec les informations de géolocalisation (via POST)*/
                     if (this.ajoutPhotoLatitude == null) {
+                        this.messagePhotoSucces = false
                         this.messagePhoto = "Tous les champs doivent être complétés pour ajouter une photo"
                     } else {
-                        console.log("UPLOAD DE L'IMAGE")
 
-                        let formData = new FormData()
-                        formData.append('file', this.file)
-                        axios.post('http://192.168.99.100:8081/photos/upload', formData,
-                            {
-                                headers: {
-                                    'Content-Type': 'multipart/form-data'
-                                }
-                            }).then(response => {
-                                console.log(response)
+                        var formData = new FormData();
+                        formData.append('file', this.selectedFile)
 
-                            })
+                        axios.post('http://192.168.99.100:8081/photos/upload/' + this.selectedSerie, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        }).then(response => {
+                            this.idImageSend = response.data.id
+                        })
                             .catch(error => {
                             })
                             .finally(() => {
+
+                                this.selectedFile = null
+                                this.ajoutPhotoLatitude = null
+                                this.ajoutPhotoLongitude = null
+                                this.ajoutPhotoUrl = null
+                                document.getElementById("file").value = "";
+                                this.mapPhotoMarker.remove()
+                                this.mapPhotoMarker = null
+                                this.putModifyImage()
+                                this.messagePhotoSucces = true
+                                this.messagePhoto = "Photo ajoutée"
+
                             })
                     }
+                },
+
+                deleteSerie(id) {
+                    axios.delete('http://192.168.99.100:8081/series/' + id, {}, {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    },
+                    ).then(response => {
+                        this.getAllSeries()
+                        this.messageSerieSuccess = false
+                        this.messageSerie = "Série supprimée"
+                    }).catch(error => {
+                    }).finally(() => {
+                    })
+                },
+
+                putModifyImage() {
+                    /* Modifie la position de l'image qui vient d'être envoyé */
+                    /* return none */
+                    axios.put('http://192.168.99.100:8081/photos/info/' + this.idImageSend, {
+                        lon: "" + this.ajoutPhotoLongitude,
+                        lat: "" + this.ajoutPhotoLatitude
+                    }, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        },
+                    ).then(response => {
+                        console.log(response)
+                    })
+                        .catch(error => {
+                        })
+                        .finally(() => {
+                        })
                 },
 
                 onFileChanged(event) {
                     /* Méthode qui génère un aperçu de la photo chargée lors d'ajout de photo */
                     this.selectedFile = event.target.files[0]
                     const file = event.target.files[0]
-                    this.ajoutPhotoUrl = URL.createObjectURL(file)
+                    if (file) {
+                        this.ajoutPhotoUrl = URL.createObjectURL(file)
+                    }
+
                 },
 
                 getClickPosition(event) {
