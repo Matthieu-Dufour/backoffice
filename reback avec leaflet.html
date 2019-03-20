@@ -287,14 +287,13 @@
                             .finally(() => {
 
                                 this.selectedFile = null
-                                this.ajoutPhotoLatitude = null
-                                this.ajoutPhotoLongitude = null
+                                
                                 this.ajoutPhotoUrl = null
                                 document.getElementById("file").value = "";
                                 this.mapPhotoMarker.remove()
                                 this.mapPhotoMarker = null
                                 this.putModifyImage()
-                                this.messagePhotoSucces = true
+                                this.messagePhotoSuccess = true
                                 this.messagePhoto = "Photo ajoutée"
 
                             })
@@ -319,6 +318,7 @@
                 putModifyImage() {
                     /* Modifie la position de l'image qui vient d'être envoyé */
                     /* return none */
+                    console.log(this.ajoutPhotoLongitude)
                     axios.put('http://192.168.99.100:8081/photos/info/' + this.idImageSend, {
                         lon: "" + this.ajoutPhotoLongitude,
                         lat: "" + this.ajoutPhotoLatitude
@@ -329,6 +329,8 @@
                         },
                     ).then(response => {
                         console.log(response)
+                        this.ajoutPhotoLatitude = null
+                        this.ajoutPhotoLongitude = null
                     })
                         .catch(error => {
                         })
@@ -435,7 +437,9 @@
                         })
                 },
             },
+            created(){
 
+            },
 
             computed: {
 
