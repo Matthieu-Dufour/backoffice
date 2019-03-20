@@ -39,7 +39,7 @@
             <div class="container">
                 <div class="row alert"
                     v-bind:class="{ 'messageSuccess': messageSerieSuccess, 'messageEchec': !messageSerieSuccess }"
-                    v-if="messageSerie != null">
+                    v-if="messageSerie != null" style="margin-top:20px">
                     {{ messageSerie }}
                 </div>
                 <div class="row">
@@ -100,7 +100,7 @@
 
                 <div class="row alert"
                     v-bind:class="{ 'messageSuccess': messagePhotoSuccess, 'messageEchec': !messagePhotoSuccess }"
-                    v-if="messagePhoto != null">
+                    v-if="messagePhoto != null" style="margin-top:20px">
                     {{ messagePhoto }}
                 </div>
                 <div class="row">
@@ -151,7 +151,7 @@
                 /* --------- GENERAL --------- */
                 affichage: 'serie',
                 ajoutPhotoUrl: null,
-                urlHttp: "192.168.99.100",
+                host: "192.168.99.100",
 
                 /* --------- AFFICHAGE PHOTO --------- */
                 ajoutPhotoLatitude: null,
@@ -231,7 +231,7 @@
                         this.messageSerieSuccess = false
                         this.messageSerie = "Tous les champs doivent être complétés pour créer une nouvelle série"
                     } else {
-                        axios.post('http://' + this.urlHttp + ':8081/series', {
+                        axios.post('http://' + this.host + ':8081/series', {
                             ville: this.nomSerie,
                             lat1: "" + this.serieNordEst.lat,
                             lon1: "" + this.serieNordEst.lng,
@@ -276,7 +276,7 @@
                         var formData = new FormData();
                         formData.append('file', this.selectedFile)
 
-                        axios.post('http://' + this.urlHttp + ':8081/photos/upload/' + this.selectedSerie, formData, {
+                        axios.post('http://' + this.host + ':8081/photos/upload/' + this.selectedSerie, formData, {
                             headers: {
                                 'Content-Type': 'multipart/form-data'
                             }
@@ -302,7 +302,7 @@
                 },
 
                 deleteSerie(id) {
-                    axios.delete('http://' + this.urlHttp + ':8081/series/' + id, {}, {
+                    axios.delete('http://' + this.host + ':8081/series/' + id, {}, {
                         headers: {
                             'Content-Type': 'application/json'
                         }
@@ -320,7 +320,7 @@
                     /* Modifie la position de l'image qui vient d'être envoyé */
                     /* return none */
                     console.log(this.ajoutPhotoLongitude)
-                    axios.put('http://' + this.urlHttp + ':8081/photos/info/' + this.idImageSend, {
+                    axios.put('http://' + this.host + ':8081/photos/info/' + this.idImageSend, {
                         lon: "" + this.ajoutPhotoLongitude,
                         lat: "" + this.ajoutPhotoLatitude
                     }, {
@@ -422,7 +422,7 @@
 
                 getAllSeries() {
                     axios
-                        .get('http://' + urlHttp + ':8081/series', {
+                        .get('http://' + this.host + ':8081/series', {
                             proxy: {
                                 host: 'http://www-cache.iutnc.univ-lorraine.fr/',
                                 port: 3128
